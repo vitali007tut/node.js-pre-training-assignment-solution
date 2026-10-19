@@ -40,10 +40,12 @@ export const ToDoList: React.FC<TodoListProps> = ({ todos }) => {
   // ]} />
 
   return (
-    <div>
-      {/* TODO: Replace this with your implementation */}
-      <h3>Todo List</h3>
-      <p>Implement the ToDoList component here</p>
-    </div>
+    <ul>
+      {todos.map((todo) => (
+        <li key={todo.id}>
+          {todo.title} - {todo.completed ? 'completed' : 'not completed'}
+        </li>
+      ))}
+    </ul>
   );
 }; 

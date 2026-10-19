@@ -35,22 +35,21 @@ import { TodoItemProps } from '../../types';
  * - JavaScript expressions can be embedded using {}
  */
 export const ToDoItem: React.FC<TodoItemProps> = ({ todo }) => {
-  // TODO: Implement the ToDoItem component
-  // 
-  // Requirements:
-  // 1. Display the todo title
-  // 2. Show completion status using conditional rendering
-  // 3. Use different styling for completed vs active todos
-  // 4. Make the component reusable for any todo object
-  // 
-  // Example usage:
-  // <ToDoItem todo={{ id: 1, title: 'Learn React', completed: true }} />
+    // TODO: Implement the ToDoItem component
+    //
+    // Requirements:
+    // 1. Display the todo title
+    // 2. Show completion status using conditional rendering
+    // 3. Use different styling for completed vs active todos
+    // 4. Make the component reusable for any todo object
+    //
+    // Example usage:
+    // <ToDoItem todo={{ id: 1, title: 'Learn React', completed: true }} />
 
-  return (
-    <div>
-      {/* TODO: Replace this with your implementation */}
-      <h4>ToDo Item Component</h4>
-      <p>Implement conditional rendering here</p>
-    </div>
-  );
-}; 
+    return (
+        <p>
+            <span style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>{todo.title}</span>{' '}
+            <span>({todo.completed ? 'completed' : 'not completed'})</span>
+        </p>
+    );
+};
