@@ -1,6 +1,5 @@
 const fs = require("fs");
 const fsPromises = require("fs").promises;
-const util = require("util");
 
 /**
  * Event Loop Analysis and Async Debugging
@@ -12,20 +11,29 @@ const util = require("util");
  * @returns {object} Analysis of execution order
  */
 function analyzeEventLoop() {
-  // TODO: Implement event loop analysis
-  // 1. Create examples showing each event loop phase
-  // 2. Demonstrate microtask vs macrotask priority
-  // 3. Show execution order with detailed logging
-  // 4. Return analysis object with explanations
-
-  const analysis = {
-    phases: [],
-    executionOrder: [],
-    explanations: [],
+  return {
+    phases: [
+      "timers: runs eligible setTimeout and setInterval callbacks",
+      "pending callbacks: runs certain deferred system callbacks",
+      "idle, prepare: internal Node.js work",
+      "poll: receives and processes I/O events, such as completed file reads",
+      "check: runs setImmediate callbacks",
+      "close callbacks: handles close events, such as a closed socket",
+    ],
+    executionOrder: [
+      "Synchronous code runs first, in the order it appears.",
+      "process.nextTick callbacks run after the current synchronous work.",
+      "Promise callbacks run as microtasks after nextTick callbacks.",
+      "I/O callbacks run when their operations are ready.",
+      "Timers and setImmediate callbacks run in their event loop phases; their relative order at the top level is not always guaranteed.",
+    ],
+    explanations: [
+      "The event loop lets Node.js handle asynchronous work without blocking the whole program while it waits for I/O.",
+      "Microtasks, including process.nextTick and Promise callbacks, are processed before Node.js continues to another event loop phase.",
+      "Timers such as setTimeout are macrotask callbacks; a delay of zero means eligible soon, not immediately.",
+      "The exact order of a timer and setImmediate scheduled at the top level can vary, so it should not be treated as a guaranteed order.",
+    ],
   };
-
-  console.log("Event loop analysis not implemented yet");
-  return analysis;
 }
 
 /**
@@ -34,18 +42,23 @@ function analyzeEventLoop() {
  * @returns {array} Predicted execution order
  */
 function predictExecutionOrder(snippet) {
-  // TODO: Implement execution order prediction
-  // 1. Analyze the provided code snippets
-  // 2. Apply event loop phase rules
-  // 3. Consider microtask priority
-  // 4. Return predicted order with explanations
-
   const predictions = {
     snippet1: [
-      // Basic event loop snippet predictions
+      "Start and End run first because they are synchronous.",
+      "Next Tick 1, then Next Tick 2 run after synchronous code.",
+      "Promise 1, then Promise 2 run after the nextTick callbacks.",
+      "Timer 1 and Timer 2 run in the timers phase.",
+      "Immediate 1 and Immediate 2 run in the check phase.",
+      "The relative order between the timer callbacks and setImmediate callbacks can vary at the top level.",
     ],
     snippet2: [
-      // File system operations snippet predictions
+      "=== Start === and === End === run first because they are synchronous.",
+      "NextTick runs after synchronous code, followed by Nested NextTick.",
+      "Timer, Immediate, and the fs.readFile callback run later when their work is ready; their overall order can vary.",
+      "NextTick in Timer runs immediately after the Timer callback.",
+      "NextTick in Immediate runs immediately after the Immediate callback.",
+      "NextTick in readFile runs immediately after the fs.readFile callback.",
+      "Inside the fs.readFile callback, Immediate in readFile normally runs before Timer in readFile because setImmediate is scheduled from an I/O callback.",
     ],
   };
 
@@ -67,9 +80,12 @@ async function fixRaceCondition() {
   const files = ["file1.txt", "file2.txt", "file3.txt"];
 
   try {
-    // Implementation goes here
-    console.log("Race condition fix not implemented yet");
-    return [];
+    return await Promise.all(
+      files.map(async (file) => {
+        const content = await fsPromises.readFile(file, "utf8");
+        return content.toUpperCase();
+      })
+    );
   } catch (error) {
     throw new Error(`Failed to process files: ${error.message}`);
   }
@@ -81,22 +97,36 @@ async function fixRaceCondition() {
  * @returns {Promise} Promise that resolves with processed user data
  */
 async function fixCallbackHell(userId) {
-  // TODO: Convert callback hell to async/await
-  // Issues to fix:
-  // 1. Callback hell structure
-  // 2. No error handling for JSON.parse
-  // 3. Repetitive error handling code
-  // 4. No file existence checking
-  // 5. Blocking operations
-
   try {
-    // Step 1: Read user file
-    // Step 2: Read user preferences
-    // Step 3: Read user activity
-    // Step 4: Combine data and write result
+    const userData = await fsPromises.readFile(`user-${userId}.json`, "utf8");
+    const user = JSON.parse(userData);
 
-    console.log("Callback hell fix not implemented yet");
-    return null;
+    const preferencesData = await fsPromises.readFile(
+      `preferences-${user.id}.json`,
+      "utf8"
+    );
+    const preferences = JSON.parse(preferencesData);
+
+    const activityData = await fsPromises.readFile(
+      `activity-${user.id}.json`,
+      "utf8"
+    );
+    const activity = JSON.parse(activityData);
+
+    const combinedData = {
+      user,
+      preferences,
+      activity,
+      processedAt: new Date(),
+    };
+
+    await fsPromises.writeFile(
+      `processed-${userId}.json`,
+      JSON.stringify(combinedData, null, 2),
+      "utf8"
+    );
+
+    return combinedData;
   } catch (error) {
     throw new Error(`Failed to process user data: ${error.message}`);
   }
@@ -107,16 +137,19 @@ async function fixCallbackHell(userId) {
  * @returns {Promise} Promise that resolves when processing is complete
  */
 async function fixMixedAsync() {
-  // TODO: Fix mixed promises and callbacks
-  // Issues to fix:
-  // 1. Mixing promises and callbacks inconsistently
-  // 2. Nested async operations without proper chaining
-  // 3. Error handling inconsistencies
-  // 4. No proper async/await usage
-
   try {
-    // Implementation goes here
-    console.log("Mixed async fix not implemented yet");
+    console.log("Starting data processing...");
+
+    const data = await fsPromises.readFile("input.txt", "utf8");
+    const processedData = data.toUpperCase();
+
+    await fsPromises.writeFile("output.txt", processedData, "utf8");
+
+    const result = await fsPromises.readFile("output.txt", "utf8");
+    console.log("Data processing completed.");
+    console.log(`Processing result: ${result}`);
+
+    return result;
   } catch (error) {
     throw new Error(`Failed to process data: ${error.message}`);
   }
@@ -127,15 +160,83 @@ async function fixMixedAsync() {
  * @returns {Promise} Promise that resolves when demonstration is complete
  */
 async function demonstrateEventLoop() {
-  // TODO: Create comprehensive event loop demonstration
-  // 1. Show timers phase (setTimeout, setInterval)
-  // 2. Show pending callbacks phase
-  // 3. Show poll phase (I/O operations)
-  // 4. Show check phase (setImmediate)
-  // 5. Show close callbacks phase
-  // 6. Demonstrate microtask priority (nextTick, Promises)
+  console.log("Event loop phases (overview):");
+  analyzeEventLoop().phases.forEach((phase) =>
+    logWithPhase(phase, "phase overview")
+  );
 
-  console.log("Event loop demonstration not implemented yet");
+  logWithPhase("Synchronous code runs first", "synchronous");
+
+  process.nextTick(() =>
+    logWithPhase("process.nextTick callback", "microtask")
+  );
+  Promise.resolve().then(() =>
+    logWithPhase("Promise callback", "microtask")
+  );
+
+  const timerDone = new Promise((resolve) => {
+    setTimeout(() => {
+      logWithPhase("setTimeout callback", "timers");
+      resolve();
+    }, 0);
+  });
+
+  const intervalDone = new Promise((resolve) => {
+    const interval = setInterval(() => {
+      clearInterval(interval);
+      logWithPhase("setInterval callback (runs once)", "timers");
+      resolve();
+    }, 0);
+  });
+
+  const immediateDone = new Promise((resolve) => {
+    setImmediate(() => {
+      logWithPhase("setImmediate callback", "check");
+      resolve();
+    });
+  });
+
+  const ioScheduledTasks = [];
+  const ioDone = new Promise((resolve, reject) => {
+    const fileStream = fs.createReadStream(__filename);
+    let dataLogged = false;
+
+    fileStream.on("data", () => {
+      if (!dataLogged) {
+        dataLogged = true;
+        logWithPhase("File data became available", "poll / I/O");
+
+        ioScheduledTasks.push(
+          new Promise((resolveImmediate) => {
+            setImmediate(() => {
+              logWithPhase("setImmediate scheduled during I/O", "check");
+              resolveImmediate();
+            });
+          }),
+          new Promise((resolveTimer) => {
+            setTimeout(() => {
+              logWithPhase("setTimeout scheduled during I/O", "timers");
+              resolveTimer();
+            }, 0);
+          })
+        );
+      }
+    });
+
+    fileStream.once("error", reject);
+    fileStream.once("close", async () => {
+      try {
+        await Promise.all(ioScheduledTasks);
+        logWithPhase("File stream closed", "close callbacks");
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+
+  await Promise.all([timerDone, intervalDone, immediateDone, ioDone]);
+  logWithPhase("Demonstration complete", "finished");
 }
 
 /**
@@ -170,10 +271,17 @@ async function createTestFiles() {
   };
 
   try {
-    // Implementation goes here
-    console.log("Test files creation not implemented yet");
+    await Promise.all(
+      Object.entries(testData).map(([filename, content]) =>
+        fsPromises.writeFile(
+          filename,
+          typeof content === "string" ? content : JSON.stringify(content, null, 2),
+          "utf8"
+        )
+      )
+    );
   } catch (error) {
-    console.error("Failed to create test files:", error.message);
+    throw new Error(`Failed to create test files: ${error.message}`);
   }
 }
 
@@ -183,13 +291,8 @@ async function createTestFiles() {
  * @param {string} phase - Event loop phase
  */
 function logWithPhase(message, phase = "unknown") {
-  // TODO: Implement detailed logging
-  // 1. Add timestamp
-  // 2. Add event loop phase information
-  // 3. Add color coding for different phases
-  // 4. Format output for better readability
-
-  console.log(`[${phase}] ${message}`);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] [${phase}] ${message}`);
 }
 
 // Export functions and data

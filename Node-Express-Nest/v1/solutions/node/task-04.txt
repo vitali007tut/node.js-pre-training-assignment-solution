@@ -1,0 +1,25 @@
+Task 04 - Mini HTTP Server for ToDos
+
+The solution uses Node.js built-in http module to serve an in-memory ToDo
+collection. It supports listing and filtering todos, reading one todo,
+creating, partially updating, and deleting todos. Request bodies are parsed
+as JSON and validated. Responses use JSON, HTTP status codes, and CORS headers.
+
+Run the automated tests from this directory:
+
+  node task-04-test.js
+
+Run the server for manual testing:
+
+  node task-04.js
+
+The server listens on http://localhost:3000 and starts with two sample todos.
+Example requests:
+
+  curl http://localhost:3000/todos
+  curl "http://localhost:3000/todos?completed=true"
+  curl -X POST http://localhost:3000/todos -H "Content-Type: application/json" -d "{\"title\":\"Test Todo\"}"
+  curl -X PUT http://localhost:3000/todos/1 -H "Content-Type: application/json" -d "{\"completed\":true}"
+  curl -X DELETE http://localhost:3000/todos/1
+
+Todos are stored in memory only, so they reset when the server restarts.

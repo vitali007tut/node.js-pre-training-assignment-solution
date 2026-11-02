@@ -1,0 +1,18 @@
+Task 05 - Event-Driven ToDo Server
+
+The TodoServer extends Node.js EventEmitter and emits events for ToDo
+operations, validation failures, missing ToDos, and server errors. Console
+logging, analytics counters, per-day statistics, and a bounded history of the
+last 100 events are connected as event listeners.
+
+Run the tests from this directory:
+
+  node task-05-test.js
+
+Run the server:
+
+  node task-05.js
+
+The server listens on port 3000. To inspect analytics and recent event history,
+request GET /analytics and GET /events?last=5. ToDos, statistics, and events
+are stored in memory and reset when the server stops.

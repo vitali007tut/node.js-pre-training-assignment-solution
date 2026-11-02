@@ -1,0 +1,11 @@
+Task 01 - Custom Event Emitter
+
+MessageSystem extends Node.js EventEmitter and provides message publishing,
+subscriptions to all messages or a specific event type, user management,
+message history, and basic statistics. It keeps at most 100 messages.
+
+Run the tests from this directory:
+
+  node task-01-test.js
+
+The implementation is in task-01.js.

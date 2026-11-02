@@ -1,0 +1,26 @@
+Task 03 - Event Loop Analysis and Async Debugging
+
+This solution explains Node.js event loop phases, predicts the order of the
+provided snippets, and demonstrates synchronous code, process.nextTick,
+Promise callbacks, timers, setImmediate, file I/O, and stream closing.
+
+The asynchronous file exercises use fs.promises and async/await:
+- fixRaceCondition reads three files in parallel with Promise.all and returns
+  their upper-case contents in the original file order.
+- fixCallbackHell reads user, preferences, and activity JSON files, combines
+  them, writes processed-<userId>.json, and returns the combined data.
+- fixMixedAsync reads input.txt, uppercases its contents, writes output.txt,
+  reads the result back, and returns it.
+- createTestFiles creates the input files used by these exercises.
+
+Run the strict tests from this directory:
+
+  node task-03-test.js
+
+To create exercise files and run the event loop demo:
+
+  node -e "const t = require('./task-03'); t.createTestFiles().then(() => t.demonstrateEventLoop()).catch(console.error)"
+
+The order between some timers, setImmediate callbacks, and I/O callbacks can
+vary. The event loop phase overview includes internal phases that user code
+cannot reliably trigger directly; the demo labels the callbacks it does show.

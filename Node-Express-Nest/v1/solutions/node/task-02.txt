@@ -1,0 +1,15 @@
+Task 02 - File Stream Transformer
+
+The solution processes CSV files as a stream: CSVParser converts rows to
+objects, DataTransformer normalizes names, email addresses, phone numbers,
+dates, and cities, and CSVWriter creates the output CSV. The pipeline uses
+fs.createReadStream, Transform streams, and fs.createWriteStream. Sample input
+and transformed output are in data/users.csv and data/users_transformed.csv.
+
+Run the tests from this directory:
+
+  node task-02-test.js
+
+The implementation is in task-02.js. To create sample input and transform it:
+
+  node -e "const t = require('./task-02'); t.createSampleData(); t.processCSVFile('data/users.csv', 'data/users_transformed.csv').catch(console.error)"
