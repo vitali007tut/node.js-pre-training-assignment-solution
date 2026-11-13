@@ -1,4 +1,5 @@
 const http = require("http");
+const { TodoService, TodoValidationError } = require("./todo-service");
 
 /**
  * Todo REST API Server
@@ -89,87 +90,13 @@ function sendResponse(res, statusCode, data) {
 }
 
 /**
- * Validate todo data according to business rules
- * @param {Object} todoData - Todo data to validate
- * @param {boolean} isUpdate - Whether this is an update operation
- * @returns {Object} Validation result with errors array
- */
-function validateTodo(todoData, isUpdate = false) {
-  const errors = [];
-  const isObject =
-    todoData !== null && typeof todoData === "object" && !Array.isArray(todoData);
-
-  if (!isObject) {
-    return { isValid: false, errors: ["Request body must be a JSON object"] };
-  }
-
-  if (!isUpdate && !Object.prototype.hasOwnProperty.call(todoData, "title")) {
-    errors.push("Title is required");
-  } else if (Object.prototype.hasOwnProperty.call(todoData, "title")) {
-    if (typeof todoData.title !== "string") {
-      errors.push("Title must be a string");
-    } else if (!todoData.title.trim()) {
-      errors.push("Title cannot be empty");
-    } else if (todoData.title.length > 100) {
-      errors.push("Title must be 100 characters or fewer");
-    }
-  }
-
-  if (Object.prototype.hasOwnProperty.call(todoData, "description")) {
-    if (typeof todoData.description !== "string") {
-      errors.push("Description must be a string");
-    } else if (todoData.description.length > 500) {
-      errors.push("Description must be 500 characters or fewer");
-    }
-  }
-
-  if (
-    Object.prototype.hasOwnProperty.call(todoData, "completed") &&
-    typeof todoData.completed !== "boolean"
-  ) {
-    errors.push("Completed must be a boolean");
-  }
-
-  return { isValid: errors.length === 0, errors };
-}
-
-/**
  * TodoServer Class - Main HTTP server for Todo API
  */
 class TodoServer {
   constructor(port = 3000) {
     this.port = port;
-    this.todos = [];
-    this.nextId = 1;
-
-    // Sample todos for testing
-    this.initializeSampleData();
-  }
-
-  /**
-   * Initialize server with sample todo data
-   */
-  initializeSampleData() {
-    const now = new Date();
-    this.todos = [
-      {
-        id: 1,
-        title: "Learn Node.js",
-        description: "Practice building a small HTTP server",
-        completed: false,
-        createdAt: new Date(now.getTime() - 86400000),
-        updatedAt: new Date(now.getTime() - 86400000),
-      },
-      {
-        id: 2,
-        title: "Read the task description",
-        description: "Review the requirements for Task 04",
-        completed: true,
-        createdAt: new Date(now.getTime() - 172800000),
-        updatedAt: new Date(now.getTime() - 86400000),
-      },
-    ];
-    this.nextId = 3;
+    this.todoService = new TodoService();
+    this.todos = this.todoService.todos;
   }
 
   /**
@@ -257,8 +184,6 @@ class TodoServer {
    * @param {Object} query - URL query parameters
    */
   async getAllTodos(req, res, query) {
-    let todos = this.todos;
-
     if (query.completed !== undefined) {
       if (query.completed !== "true" && query.completed !== "false") {
         sendResponse(res, 400, {
@@ -267,10 +192,11 @@ class TodoServer {
         });
         return;
       }
-      const completed = query.completed === "true";
-      todos = todos.filter((todo) => todo.completed === completed);
     }
 
+    const completed =
+      query.completed === undefined ? undefined : query.completed === "true";
+    const todos = this.todoService.list(completed);
     sendResponse(res, 200, {
       success: true,
       data: todos,
@@ -285,7 +211,7 @@ class TodoServer {
    * @param {Object} params - Path parameters
    */
   async getTodoById(req, res, params) {
-    const todo = this.findTodoById(params.id);
+    const todo = this.todoService.findById(params.id);
     if (!todo) {
       const status = /^\d+$/.test(params.id) ? 404 : 400;
       sendResponse(res, status, {
@@ -305,27 +231,22 @@ class TodoServer {
    */
   async createTodo(req, res) {
     const todoData = await parseBody(req);
-    const validation = validateTodo(todoData);
-    if (!validation.isValid) {
+    let todo;
+    try {
+      todo = this.todoService.create(todoData);
+    } catch (error) {
+      if (!(error instanceof TodoValidationError)) {
+        throw error;
+      }
+
       sendResponse(res, 400, {
         success: false,
         error: "Validation failed",
-        details: validation.errors,
+        details: error.errors,
       });
       return;
     }
 
-    const now = new Date();
-    const todo = {
-      id: this.generateNextId(),
-      title: todoData.title.trim(),
-      description: todoData.description === undefined ? "" : todoData.description,
-      completed: todoData.completed === undefined ? false : todoData.completed,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.todos.push(todo);
     sendResponse(res, 201, { success: true, data: todo });
   }
 
@@ -336,8 +257,8 @@ class TodoServer {
    * @param {Object} params - Path parameters
    */
   async updateTodo(req, res, params) {
-    const todo = this.findTodoById(params.id);
-    if (!todo) {
+    const existingTodo = this.todoService.findById(params.id);
+    if (!existingTodo) {
       const status = /^\d+$/.test(params.id) ? 404 : 400;
       sendResponse(res, status, {
         success: false,
@@ -347,26 +268,21 @@ class TodoServer {
     }
 
     const updates = await parseBody(req);
-    const validation = validateTodo(updates, true);
-    if (!validation.isValid) {
+    let todo;
+    try {
+      todo = this.todoService.update(params.id, updates);
+    } catch (error) {
+      if (!(error instanceof TodoValidationError)) {
+        throw error;
+      }
+
       sendResponse(res, 400, {
         success: false,
         error: "Validation failed",
-        details: validation.errors,
+        details: error.errors,
       });
       return;
     }
-
-    if (Object.prototype.hasOwnProperty.call(updates, "title")) {
-      todo.title = updates.title.trim();
-    }
-    if (Object.prototype.hasOwnProperty.call(updates, "description")) {
-      todo.description = updates.description;
-    }
-    if (Object.prototype.hasOwnProperty.call(updates, "completed")) {
-      todo.completed = updates.completed;
-    }
-    todo.updatedAt = new Date();
 
     sendResponse(res, 200, { success: true, data: todo });
   }
@@ -378,8 +294,8 @@ class TodoServer {
    * @param {Object} params - Path parameters
    */
   async deleteTodo(req, res, params) {
-    const index = this.findTodoIndexById(params.id);
-    if (index === -1) {
+    const todo = this.todoService.delete(params.id);
+    if (!todo) {
       const status = /^\d+$/.test(params.id) ? 404 : 400;
       sendResponse(res, status, {
         success: false,
@@ -388,7 +304,6 @@ class TodoServer {
       return;
     }
 
-    this.todos.splice(index, 1);
     sendResponse(res, 200, {
       success: true,
       message: "Todo deleted successfully",
@@ -410,34 +325,7 @@ class TodoServer {
    * @returns {Object|null} Found todo or null
    */
   findTodoById(id) {
-    if (!/^\d+$/.test(String(id))) {
-      return null;
-    }
-
-    const numId = Number(id);
-    return this.todos.find((todo) => todo.id === numId) || null;
-  }
-
-  /**
-   * Find todo index by ID in storage
-   * @param {number|string} id - Todo ID
-   * @returns {number} Todo index or -1 if not found
-   */
-  findTodoIndexById(id) {
-    if (!/^\d+$/.test(String(id))) {
-      return -1;
-    }
-
-    const numId = Number(id);
-    return this.todos.findIndex((todo) => todo.id === numId);
-  }
-
-  /**
-   * Generate next available ID
-   * @returns {number} Next ID
-   */
-  generateNextId() {
-    return this.nextId++;
+    return this.todoService.findById(id);
   }
 }
 

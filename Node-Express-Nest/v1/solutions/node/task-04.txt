@@ -3,7 +3,9 @@ Task 04 - Mini HTTP Server for ToDos
 The solution uses Node.js built-in http module to serve an in-memory ToDo
 collection. It supports listing and filtering todos, reading one todo,
 creating, partially updating, and deleting todos. Request bodies are parsed
-as JSON and validated. Responses use JSON, HTTP status codes, and CORS headers.
+as JSON and validated. Shared CRUD and validation logic lives in todo-service.js
+and is also used by the Express Task 4 solution. Responses use JSON, HTTP
+status codes, and CORS headers.
 
 Run the automated tests from this directory:
 
