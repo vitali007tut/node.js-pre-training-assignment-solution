@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
@@ -26,7 +26,7 @@ export class MathService {
   divide(a: number, b: number): number {
     if (b === 0) {
       this.logger.error('MathService', 'Division by zero!');
-      throw new Error('Division by zero');
+      throw new BadRequestException('Division by zero');
     }
     const result = a / b;
     this.logger.log('MathService', `divide(${a}, ${b}) = ${result}`);

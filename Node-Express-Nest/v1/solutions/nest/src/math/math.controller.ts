@@ -2,6 +2,9 @@ import { Controller, Get, Query, ParseFloatPipe } from '@nestjs/common';
 import { MathService } from './math.service';
 import { LoggerService } from '../logger/logger.service';
 
+type MathOperation = 'add' | 'subtract' | 'multiply' | 'divide';
+type MathCalculation = (a: number, b: number) => number;
+
 @Controller('math')
 export class MathController {
   constructor(
@@ -14,8 +17,9 @@ export class MathController {
     @Query('a', ParseFloatPipe) a: number,
     @Query('b', ParseFloatPipe) b: number,
   ) {
-    this.logger.log('MathController', `Incoming: add?a=${a}&b=${b}`);
-    return { operation: 'add', a, b, result: this.mathService.add(a, b) };
+    return this.execute('add', a, b, (left, right) =>
+      this.mathService.add(left, right),
+    );
   }
 
   @Get('subtract')
@@ -23,8 +27,9 @@ export class MathController {
     @Query('a', ParseFloatPipe) a: number,
     @Query('b', ParseFloatPipe) b: number,
   ) {
-    this.logger.log('MathController', `Incoming: subtract?a=${a}&b=${b}`);
-    return { operation: 'subtract', a, b, result: this.mathService.subtract(a, b) };
+    return this.execute('subtract', a, b, (left, right) =>
+      this.mathService.subtract(left, right),
+    );
   }
 
   @Get('multiply')
@@ -32,8 +37,9 @@ export class MathController {
     @Query('a', ParseFloatPipe) a: number,
     @Query('b', ParseFloatPipe) b: number,
   ) {
-    this.logger.log('MathController', `Incoming: multiply?a=${a}&b=${b}`);
-    return { operation: 'multiply', a, b, result: this.mathService.multiply(a, b) };
+    return this.execute('multiply', a, b, (left, right) =>
+      this.mathService.multiply(left, right),
+    );
   }
 
   @Get('divide')
@@ -41,7 +47,18 @@ export class MathController {
     @Query('a', ParseFloatPipe) a: number,
     @Query('b', ParseFloatPipe) b: number,
   ) {
-    this.logger.log('MathController', `Incoming: divide?a=${a}&b=${b}`);
-    return { operation: 'divide', a, b, result: this.mathService.divide(a, b) };
+    return this.execute('divide', a, b, (left, right) =>
+      this.mathService.divide(left, right),
+    );
+  }
+
+  private execute(
+    operation: MathOperation,
+    a: number,
+    b: number,
+    calculate: MathCalculation,
+  ) {
+    this.logger.log('MathController', `Incoming: ${operation}?a=${a}&b=${b}`);
+    return { operation, a, b, result: calculate(a, b) };
   }
 }
