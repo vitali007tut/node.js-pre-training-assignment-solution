@@ -1,0 +1,7 @@
+Task 6 — PostgreSQL index
+
+Command:
+psql -U postgres -d todo_app -P pager=off -f "DB/solutions/task-06.sql"
+
+Result: index created. `EXPLAIN ANALYZE` chose `Seq Scan`, returned 3 rows,
+filtered 2, and reported 0.051 ms execution time.

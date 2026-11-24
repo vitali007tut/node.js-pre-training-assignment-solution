@@ -1,0 +1,7 @@
+Task 3 — PostgreSQL filtering and sorting
+
+Command:
+psql -U postgres -d todo_app -P pager=off -f "DB/solutions/task-03.sql"
+
+The script adds five sample todos and runs the required filter, sort, and
+keyword-search queries. The sample todos remain in the database.

@@ -1,0 +1,6 @@
+Task 1 — PostgreSQL
+
+Command:
+psql -U postgres -d todo_app -f "DB/solutions/task-01.sql"
+
+Result: created the `todos` table.

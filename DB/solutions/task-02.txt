@@ -1,0 +1,6 @@
+Task 2 — PostgreSQL CRUD
+
+Command:
+psql -U postgres -d todo_app -P pager=off -f "DB/solutions/task-02.sql"
+
+Result: INSERT 1 row; UPDATE 1 row; DELETE 1 row; final SELECT returned 0 rows.

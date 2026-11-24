@@ -1,0 +1,10 @@
+Task 4 — PostgreSQL relationships
+
+Command:
+psql -U postgres -d todo_app -P pager=off -f "DB/solutions/task-04.sql"
+
+The script creates `users`, adds a test user for the existing todos, and
+adds a foreign key from `todos.user_id` to `users.id`.
+
+Result: `users` and the test user were created with ID 1; the foreign key was
+added successfully (`ALTER TABLE`).

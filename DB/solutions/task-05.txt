@@ -1,0 +1,7 @@
+Task 5 — PostgreSQL aggregation
+
+Command:
+psql -U postgres -d todo_app -P pager=off -f "DB/solutions/task-05.sql"
+
+The script adds a user with no todos, counts todos by status and user, and
+lists users with no todos.
