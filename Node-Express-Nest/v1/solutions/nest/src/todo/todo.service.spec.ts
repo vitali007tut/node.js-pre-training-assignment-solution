@@ -6,6 +6,7 @@ import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { TodoEntity } from './todo.entity';
 import { TodoService } from './todo.service';
+import { UserEntity } from '../user/user.entity';
 
 describe('TodoService', () => {
   let service: TodoService;
@@ -15,6 +16,7 @@ describe('TodoService', () => {
       'create' | 'save' | 'find' | 'findOneBy' | 'remove'
     >
   >;
+  let userRepository: jest.Mocked<Pick<Repository<UserEntity>, 'findOneBy'>>;
 
   beforeEach(async () => {
     repository = {
@@ -24,6 +26,9 @@ describe('TodoService', () => {
       findOneBy: jest.fn(),
       remove: jest.fn(),
     };
+    userRepository = {
+      findOneBy: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -32,6 +37,10 @@ describe('TodoService', () => {
           provide: getRepositoryToken(TodoEntity),
           useValue: repository,
         },
+        {
+          provide: getRepositoryToken(UserEntity),
+          useValue: userRepository,
+        },
       ],
     }).compile();
 
@@ -39,12 +48,20 @@ describe('TodoService', () => {
   });
 
   it('maps DTOs through the repository and returns API response objects', async () => {
+    const user: UserEntity = {
+      id: 1,
+      name: 'Test User',
+      email: 'test.user@example.com',
+      createdAt: new Date(),
+      todos: [],
+    };
     const entity: TodoEntity = {
       id: 1,
       title: 'Learn NestJS',
       description: null,
+      status: 'active',
       createdAt: new Date(),
-      updatedAt: new Date(),
+      user,
     };
     const updatedEntity = {
       ...entity,
@@ -58,13 +75,16 @@ describe('TodoService', () => {
     repository.find.mockResolvedValue([entity]);
     repository.findOneBy.mockResolvedValue(entity);
     repository.remove.mockResolvedValue(entity);
+    userRepository.findOneBy.mockResolvedValue(user);
 
-    const createDto: CreateTodoDto = { title: 'Learn NestJS' };
+    const createDto: CreateTodoDto = { title: 'Learn NestJS', userId: 1 };
     const created = await service.create(createDto);
     expect(repository.create).toHaveBeenCalledWith({
       title: 'Learn NestJS',
       description: null,
+      user,
     });
+    expect(userRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
     expect(created).toEqual({ id: 1, title: 'Learn NestJS' });
 
     expect(await service.findAll()).toEqual([created]);
@@ -94,5 +114,14 @@ describe('TodoService', () => {
       NotFoundException,
     );
     await expect(service.remove(404)).rejects.toThrow(NotFoundException);
+  });
+
+  it('throws NotFoundException when creating a todo for a missing user', async () => {
+    userRepository.findOneBy.mockResolvedValue(null);
+
+    await expect(
+      service.create({ title: 'Learn SQL', userId: 404 }),
+    ).rejects.toThrow(NotFoundException);
+    expect(repository.create).not.toHaveBeenCalled();
   });
 });

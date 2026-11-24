@@ -2,24 +2,30 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
+import { UserEntity } from '../user/user.entity';
 
 @Entity('todos')
 export class TodoEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ type: 'varchar', length: 120 })
+  @Column({ type: 'text' })
   title!: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'text', nullable: true })
   description!: string | null;
 
-  @CreateDateColumn()
+  @Column({ type: 'text', default: 'active' })
+  status!: 'active' | 'completed';
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @ManyToOne(() => UserEntity, (user) => user.todos, { nullable: false })
+  @JoinColumn({ name: 'user_id' })
+  user!: UserEntity;
 }

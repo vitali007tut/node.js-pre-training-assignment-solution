@@ -32,6 +32,7 @@ yarn-error.log*
 
 # Ignore local env files
 .env.* 
+!.env.example
 
 # Local NestJS SQLite database
 Node-Express-Nest/v1/solutions/nest/todos.sqlite*

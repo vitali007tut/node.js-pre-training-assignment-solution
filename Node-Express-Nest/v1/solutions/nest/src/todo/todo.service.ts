@@ -5,18 +5,29 @@ import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { TodoEntity } from './todo.entity';
 import { Todo } from './todo.model';
+import { UserEntity } from '../user/user.entity';
 
 @Injectable()
 export class TodoService {
   constructor(
     @InjectRepository(TodoEntity)
     private readonly todoRepository: Repository<TodoEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async create(createTodoDto: CreateTodoDto): Promise<Todo> {
+    const user = await this.userRepository.findOneBy({
+      id: createTodoDto.userId,
+    });
+    if (!user) {
+      throw new NotFoundException(`User ${createTodoDto.userId} was not found`);
+    }
+
     const todo = this.todoRepository.create({
       title: createTodoDto.title,
       description: createTodoDto.description ?? null,
+      user,
     });
 
     return this.toResponse(await this.todoRepository.save(todo));
