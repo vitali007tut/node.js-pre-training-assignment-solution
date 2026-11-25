@@ -4,4 +4,4 @@ Created audit_log and triggers for todo updates and deletes.
 Run: psql -U postgres -d todo_app -P pager=off -f "DB/solutions/task-09.sql"
 Verified: updating and deleting a test todo added both actions to audit_log.
 
-Commit: .
+Commit: 615e807824819410be0cfd6c76aea51aff192262.

@@ -26,6 +26,11 @@ export class TodoController {
     return this.todoService.findAll();
   }
 
+  @Get('user/:userId')
+  findByUser(@Param('userId', ParseIntPipe) userId: number) {
+    return this.todoService.findByUser(userId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.todoService.findOne(id);
