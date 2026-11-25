@@ -74,7 +74,14 @@ describe('TodoService', () => {
       .mockResolvedValueOnce(updatedEntity);
     repository.find.mockResolvedValue([entity]);
     repository.findOneBy.mockResolvedValue(entity);
-    repository.remove.mockResolvedValue(entity);
+    repository.remove.mockImplementation(async (removedTodo) => {
+      Object.defineProperty(removedTodo, 'id', {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+      return removedTodo;
+    });
     userRepository.findOneBy.mockResolvedValue(user);
 
     const createDto: CreateTodoDto = { title: 'Learn NestJS', userId: 1 };

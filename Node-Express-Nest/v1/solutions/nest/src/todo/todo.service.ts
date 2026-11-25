@@ -62,8 +62,9 @@ export class TodoService {
 
   async remove(id: number): Promise<Todo> {
     const todo = await this.findEntity(id);
+    const response = this.toResponse(todo);
     await this.todoRepository.remove(todo);
-    return this.toResponse(todo);
+    return response;
   }
 
   private async findEntity(id: number): Promise<TodoEntity> {

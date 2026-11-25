@@ -1,0 +1,16 @@
+Task 8 — TypeORM CRUD
+
+TodoService uses a TypeORM Repository for create, read, update, and delete.
+
+Run the server from Node-Express-Nest/v1/solutions/nest:
+npm start
+
+Check CRUD from a second terminal:
+curl -X POST http://localhost:3000/todos -H "Content-Type: application/json" -d '{"title":"CRUD test","userId":3}'
+curl http://localhost:3000/todos
+curl -X PATCH http://localhost:3000/todos/<id> -H "Content-Type: application/json" -d '{"description":"Updated"}'
+curl -X DELETE http://localhost:3000/todos/<id>
+curl -i http://localhost:3000/todos/<id>
+
+Build and TodoService tests passed.
+Commit: 83e48e692cd102704b9f2571ecbb29ec6d80703f
