@@ -1,0 +1,11 @@
+Task 10 — Redis caching
+
+Added GET /todos/user/:userId with a 5-minute Redis cache.
+Create, update, and delete invalidate that user's cached list.
+
+Redis: docker run --name task-redis -p 127.0.0.1:6379:6379 -d redis:7-alpine
+Client: npm install redis
+
+Verified cache hit, TTL expiry, and invalidation after create, update, and delete.
+
+Commit: 493cd8bad20bb7248eb8fc9a6ae571f0dfafa2ef.
