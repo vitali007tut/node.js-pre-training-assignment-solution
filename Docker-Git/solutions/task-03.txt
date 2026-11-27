@@ -1,0 +1,65 @@
+Task 03 — Create and Run Your First Docker Container
+
+Dockerfile
+----------
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY app.js ./
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+
+Docker commands used
+--------------------
+docker --version — Docker CLI version: 29.9.3.
+docker info --format '{{.ServerVersion}}' — confirmed Docker Engine version 29.9.3.
+docker build -t my-node-app:v1 . — built the image; image ID: 1ec40219352a.
+docker run -d --name my-node-container -p 3000:3000 my-node-app:v1 — started the container in the background; container ID: d0a720f44ffa.
+docker ps — listed running containers.
+docker inspect my-node-container — inspected container configuration and runtime state.
+docker logs my-node-container — displayed the application logs.
+docker images — listed local images.
+docker stop my-node-container — stopped the container.
+docker rm my-node-container — removed the stopped container.
+docker ps -a --filter name=my-node-container — confirmed that the container was removed.
+
+docker ps output
+----------------
+CONTAINER ID   IMAGE            COMMAND                  CREATED         STATUS         PORTS                                         NAMES
+d0a720f44ffa   my-node-app:v1   "docker-entrypoint.s…"   3 minutes ago   Up 3 minutes   0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp   my-node-container
+
+--------------------
+IMAGE          ID             DISK USAGE   CONTENT SIZE   EXTRA
+my-node-app:v1 1ec40219352a        173MB             0B    U
+
+docker inspect output (relevant fields)
+---------------------------------------
+State.Status: running
+Config.Image: my-node-app:v1
+Config.WorkingDir: /app
+Config.Cmd: ["npm", "start"]
+NetworkSettings.Ports: 3000/tcp -> host port 3000 (0.0.0.0 and ::)
+NetworkSettings.Networks.bridge.IPAddress: 172.17.0.2
+
+Application test and logs
+-------------------------
+curl http://localhost:3000
+Hello Docker!
+
+docker logs my-node-container:
+> my-first-repo@1.0.0 start
+> node app.js
+
+Server listening on port 3000
+
+Cleanup
+-------
+docker stop my-node-container output: my-node-container
+docker rm my-node-container output: my-node-container
+docker ps -a --filter name=my-node-container showed no matching containers.

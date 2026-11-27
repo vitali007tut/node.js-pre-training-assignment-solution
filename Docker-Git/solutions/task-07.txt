@@ -1,0 +1,92 @@
+Task 07 — Docker Compose
+
+Project
+-------
+...\my-first-repo
+
+API endpoints
+-------------
+GET http://localhost:3000/health
+{"status":"ok"}
+
+GET http://localhost:3000/data
+[{"id":1,"name":"First item"},{"id":2,"name":"Second item"}]
+
+docker-compose.yml
+------------------
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d app_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
+
+URLs and credentials
+--------------------
+API: http://localhost:3000
+pgAdmin: http://localhost:5050
+
+pgAdmin login: admin@example.com / admin123
+PostgreSQL host: db
+PostgreSQL port: 5432
+Database: app_db
+User: app_user
+Password: app_password
+
+Compose commands
+----------------
+docker compose config
+docker compose up --build -d
+docker compose ps
+docker compose logs --tail=10 api
+docker compose logs --tail=10 db
+docker compose logs --tail=10 pgadmin
+docker compose down
+
+docker compose ps while running
+-------------------------------
+NAME                      IMAGE               SERVICE   STATUS                  PORTS
+my-first-repo-api-1       my-first-repo-api   api       Up                      0.0.0.0:3000->3000/tcp
+my-first-repo-db-1        postgres:16         db        Up (healthy)            5432/tcp
+my-first-repo-pgadmin-1   dpage/pgadmin4      pgadmin   Up                      0.0.0.0:5050->80/tcp
+
+The services communicate over app-network. pgAdmin connects to PostgreSQL using the service name db. The named postgres_data volume preserves database files after docker compose down.

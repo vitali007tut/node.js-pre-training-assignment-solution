@@ -1,0 +1,27 @@
+Task 01 — Initialize Repository and Basic Git Operations
+
+Practice repository
+-------------------
+...\my-first-repo
+
+Git commands used
+-----------------
+git init — initializes a Git repository in the current directory.
+git config --global user.name — displays the globally configured author name.
+git config --global user.email — displays the globally configured author email.
+git config --local user.name "Vitali" — sets the author name for this repository.
+git config --local user.email "61989351+vitali007tut@users.noreply.github.com" — sets the author email for this repository.
+git config --local --list — lists this repository's local Git settings.
+git add .gitignore — stages .gitignore for the first commit.
+git status --short — displays a concise working-tree status.
+git commit -m "Add Git ignore rules" — creates the first commit.
+git add README.md package.json — stages both project files for the second commit.
+git status --short — verifies the staged files.
+git commit -m "Add project documentation and metadata" — creates the second commit.
+git log --oneline — displays the commit history in a compact format.
+git status --short — checks for remaining changes.
+
+Commit history
+--------------
+b258f2c (HEAD -> master) Add project documentation and metadata
+bb2cb63 Add Git ignore rules

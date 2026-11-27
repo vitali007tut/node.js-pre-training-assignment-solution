@@ -1,0 +1,153 @@
+Task 09 — Mastering Docker Commands and Image Management
+
+docker system df (before)
+--------------------------
+Images:       8 total,  2.295GB,  1.619GB reclaimable
+Containers:   3 total,  1.158kB,  all inactive
+Volumes:      4 total,  97.43MB
+Build Cache:  36 items, 141.2MB
+
+docker system df (after cleanup)
+---------------------------------
+Images:       7 total,  1.89GB,   1.213GB reclaimable
+Volumes:      5 total,  97.43MB
+Containers:   3 total,  only pre-existing exited containers remain
+
+---
+
+1. Image Management
+-------------------
+# Pull images
+docker pull nginx:alpine
+docker pull redis:7-alpine
+docker pull node:24-alpine
+
+# List images
+docker images
+
+# Inspect image metadata
+docker inspect nginx:alpine | grep -E '"Architecture"|"Os"|"Size"'
+
+# Tag image
+docker tag nginx:alpine nginx:my-custom-tag
+
+# Save image to tar file
+docker save nginx:alpine -o nginx-alpine.tar
+
+# Load image from tar file
+docker load -i nginx-alpine.tar
+
+# Remove specific image
+docker rmi nginx:alpine nginx:my-custom-tag
+
+# Remove unused images (dangling only)
+docker image prune
+
+# Remove all unused images
+docker image prune -a
+
+
+2. Container Lifecycle
+----------------------
+# Run nginx in detached mode with port mapping
+docker run -d --name my-nginx -p 8080:80 nginx:alpine
+
+# Run redis with custom name and restart policy
+docker run -d --name my-redis --restart always redis:7-alpine
+
+# Create Node.js container without starting it
+docker create --name my-node node:24-alpine node -e "console.log('Node.js container started')"
+
+# Start container manually with output attached
+docker start -a my-node
+
+# Execute command inside running container
+MSYS_NO_PATHCONV=1 docker exec my-nginx cat /etc/nginx/nginx.conf
+
+# Redis CLI inside container
+docker exec -it my-redis redis-cli ping
+# Output: PONG
+
+# Copy file from host to container
+docker cp test.html my-nginx:/usr/share/nginx/html/test.html
+
+# Copy file from container to host
+docker cp my-nginx:/usr/share/nginx/html/index.html ./nginx-index.html
+
+# List all containers including stopped
+docker ps -a
+
+
+3. Monitoring and Troubleshooting
+----------------------------------
+# Resource usage snapshot
+docker stats --no-stream
+# my-redis: 9.9MB RAM, 0.82% CPU
+# my-nginx: 7.0MB RAM, 0.00% CPU
+
+# View logs with timestamps
+docker logs --timestamps --tail 20 my-nginx
+
+# Inspect container (IP, restart policy, port bindings)
+docker inspect my-nginx | grep -E '"IPAddress"|"RestartPolicy"|"PortBindings"'
+# IPAddress: 172.17.0.2
+
+# Create and list volumes
+docker volume create my-test-volume
+docker volume ls
+
+# Create user-defined network (enables DNS by container name)
+docker network create my-network
+docker network connect my-network my-nginx
+docker network connect my-network my-redis
+
+# Test DNS resolution between containers
+MSYS_NO_PATHCONV=1 docker exec my-nginx sh -c "wget -qO- http://my-redis:6379 || echo 'connection attempted'"
+# DNS resolved successfully, protocol error expected (HTTP vs Redis binary protocol)
+
+
+4. Cleanup
+----------
+# Stop containers
+docker stop my-nginx my-redis
+
+# Remove containers
+docker rm my-nginx my-redis my-node
+
+# Remove images
+docker rmi nginx:alpine node:24-alpine
+
+# Remove volume
+docker volume rm my-test-volume
+
+# Remove network
+docker network rm my-network
+
+# Remove all stopped containers
+docker container prune
+
+# Remove all unused images
+docker image prune -a
+
+# Remove everything unused at once
+docker system prune -a --volumes
+
+
+Notes
+-----
+- MSYS_NO_PATHCONV=1 prefix required in Git Bash on Windows when passing
+  Unix absolute paths to Docker commands (e.g. /etc/nginx/nginx.conf)
+- alpine-based images are significantly smaller: redis:7-alpine 39MB vs full ~110MB
+- --restart always keeps containers running after system reboot
+- --force-with-lease is safer than --force for git push (checks remote state first)
+- User-defined networks enable container DNS; default bridge network does not
+
+Most useful commands
+--------------------
+docker ps -a                  -- see all containers and their status
+docker logs --follow          -- live log stream for debugging
+docker stats --no-stream      -- quick resource usage check
+docker inspect                -- full container/image configuration
+docker exec -it <name> sh     -- open shell inside running container
+docker system df              -- disk usage overview
+docker system prune -a        -- clean up everything unused

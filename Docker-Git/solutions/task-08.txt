@@ -1,0 +1,53 @@
+Task 08 — Simulating Team Git Workflow with Multiple Remotes
+
+Project
+-------
+...\my-first-repo
+
+Remote configuration (git remote -v)
+-------------------------------------
+origin    ../task8-fork.git     (fetch)
+origin    ../task8-fork.git     (push)
+upstream  ../task8-company.git  (fetch)
+upstream  ../task8-company.git  (push)
+
+Feature branch workflow
+-----------------------
+1. Created feature branch off main:
+   git switch -c feature/version-endpoint
+
+2. Added GET /version endpoint to src/index.ts:
+   Compiled output updated in dist/index.js.
+
+3. Committed and pushed to fork:
+   git add src/index.ts dist/index.js
+   git commit -m "feat: add /version endpoint"
+   git push origin feature/version-endpoint
+
+4. Merged feature branch into upstream (Pull Request simulation):
+   git update-ref refs/heads/main feature/version-endpoint
+
+5. Addressed review feedback (added app name to response):
+   git commit -m "fix: add app name to version response per review"
+   git push --force-with-lease origin feature/version-endpoint
+
+Key commits
+-----------
+83d7e45  fix: add app name to version response per review
+6037903  feat: add /version endpoint
+a553761  Document Git and Docker exercises
+
+Handling upstream changes (fork sync)
+--------------------------------------
+git switch main
+git pull upstream main      -- fetch latest from company repo
+git push origin main        -- update fork to match upstream
+
+Strategy for handling upstream changes
+---------------------------------------
+After a PR is merged, always sync local main and fork:
+  git pull upstream main
+  git push origin main
+Before starting new work, pull upstream to avoid conflicts.
+Delete merged feature branches to keep the repo clean:
+  git branch -d feature/version-endpoint

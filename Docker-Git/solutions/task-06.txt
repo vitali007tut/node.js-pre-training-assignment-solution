@@ -1,0 +1,51 @@
+Task 06 — Git Rebase
+
+Before interactive rebase
+-------------------------
+f5f60d2 Add token authentication helper
+db54c6d Fix typo in authentication message
+90ed125 Add authentication test script
+bbc76c2 Add bearer token middleware
+59299f9 Add authentication tests
+
+Interactive rebase
+------------------
+git rebase -i main
+
+Moved the npm-script commit before the helper, squashed the typo fix into the helper, and clarified commit messages.
+
+After interactive rebase:
+7038488 Add authentication tests
+df656d3 Add bearer token middleware
+f3d0614 Add token authentication helper
+dd66380 Add npm script for authentication tests
+
+git rebase --continue
+
+Merge comparison
+----------------
+Added a README note on main:
+a553761 Document Git and Docker exercises
+
+git switch -c test/merge-approach
+git merge --no-edit feature/user-authentication
+
+Merge created commit 9a5064d and preserved both histories.
+
+Rebased the feature branch onto updated main:
+git switch feature/user-authentication
+git rebase main
+
+After rebase:
+70659d1 Add authentication tests
+b285d48 Add bearer token middleware
+b9b93f7 Add token authentication helper
+60fbf7d Add npm script for authentication tests
+a553761 Document Git and Docker exercises
+
+Rebase and merge
+----------------
+Rebase replays commits onto a new base, creating a linear history and new commit hashes. Use it to clean up a private branch; don't rebase commits already shared with others.
+
+Merge preserves both histories and adds a merge commit. Use it when the branch structure should remain visible.
+

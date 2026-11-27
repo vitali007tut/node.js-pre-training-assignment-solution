@@ -1,0 +1,183 @@
+Task 10 — Advanced Docker Networking and Data Persistence
+
+Network topology diagram
+------------------------
+
+  [Block 2 - Multi-container]
+  app-network (bridge, DNS enabled)
+  ├── mongodb:27017       (named volume: mongodb-data -> /data/db)
+  └── mongo-express:8081  (connects to mongodb by service name)
+
+  [Block 4 - Isolation]
+  network-red             network-blue
+  └── red-container       └── blue-container
+        │
+        └── (after network connect) also joined network-blue
+              → can now reach blue-container by name
+
+  Isolation result:
+  red-container → blue-container (before connect): FAIL - bad address
+  red-container → blue-container (after connect):  OK
+
+
+1. Custom Network Creation and Management
+-----------------------------------------
+# Create simple bridge network
+docker network create app-network
+
+# Create network with custom subnet and gateway
+docker network create --subnet 192.168.100.0/24 --gateway 192.168.100.1 isolated-network
+
+# List networks
+docker network ls
+
+# Inspect network subnet
+docker network inspect isolated-network --format "Subnet: {{range .IPAM.Config}}{{.Subnet}}{{end}}  Gateway: {{range .IPAM.Config}}{{.Gateway}}{{end}}"
+# Output: Subnet: 192.168.100.0/24  Gateway: 192.168.100.1
+
+# Test DNS between containers on same network
+docker run -d --name container-a --network app-network nginx:alpine
+docker run -d --name container-b --network app-network nginx:alpine
+MSYS_NO_PATHCONV=1 docker exec container-a sh -c "wget -qO- http://container-b"
+# container-a resolved container-b by name - DNS works
+
+
+2. Multi-container Communication
+----------------------------------
+# Create named volume for MongoDB data
+docker volume create mongodb-data
+
+# Run MongoDB with named volume
+docker run -d --name mongodb --network app-network \
+  -v mongodb-data:/data/db \
+  -e MONGO_INITDB_ROOT_USERNAME=admin \
+  -e MONGO_INITDB_ROOT_PASSWORD=secret \
+  mongo:7
+
+# Run Mongo Express connected to MongoDB by service name
+docker run -d --name mongo-express --network app-network -p 8081:8081 \
+  -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin \
+  -e ME_CONFIG_MONGODB_ADMINPASSWORD=secret \
+  -e ME_CONFIG_MONGODB_URL=mongodb://admin:secret@mongodb:27017/ \
+  -e ME_CONFIG_BASICAUTH=false \
+  mongo-express
+
+# Mongo Express logs confirm DNS resolution:
+# "Waiting for mongodb:27017..." -> connected by container name, not IP
+
+# Web UI available at http://localhost:8081
+
+
+3. Volume Types and Data Persistence
+--------------------------------------
+# --- Named Volume ---
+# Data managed by Docker, survives container removal
+docker volume create mongodb-data
+docker run -d -v mongodb-data:/data/db mongo:7
+
+# Insert test record
+docker exec mongodb mongosh -u admin -p secret \
+  --eval "db.getSiblingDB('testdb').items.insertOne({name: 'persistent item'})" --quiet
+
+# Remove and recreate container - data survives
+docker rm -f mongodb
+docker run -d --name mongodb -v mongodb-data:/data/db ... mongo:7
+docker exec mongodb mongosh -u admin -p secret \
+  --eval "db.getSiblingDB('testdb').items.find().toArray()" --quiet
+# Output: [{ _id: ObjectId(...), name: 'persistent item' }]
+
+# --- Bind Mount ---
+# Host directory mounted directly into container
+# Changes on host are immediately visible inside container
+docker run -d --name nginx-bindmount -p 8082:80 \
+  -v "C:/Users/v7364/Documents/Projects/docker-bindmount-test:/usr/share/nginx/html" \
+  nginx:alpine
+
+# Edit file on host -> immediately served by nginx, no restart needed
+echo "<h1>Updated</h1>" > docker-bindmount-test/index.html
+curl http://localhost:8082
+# Output: <h1>Updated</h1>
+
+
+# --- tmpfs Mount ---
+# Data stored in RAM only, never written to disk, lost on restart
+MSYS_NO_PATHCONV=1 docker run -d --name tmpfs-test \
+  --mount type=tmpfs,destination=/tmp/cache nginx:alpine
+
+MSYS_NO_PATHCONV=1 docker exec tmpfs-test sh -c \
+  "echo 'temporary data' > /tmp/cache/test.txt && cat /tmp/cache/test.txt"
+# Output: temporary data
+
+docker restart tmpfs-test
+MSYS_NO_PATHCONV=1 docker exec tmpfs-test sh -c \
+  "cat /tmp/cache/test.txt || echo 'File gone after restart'"
+# Output: File gone after restart
+
+
+4. Network Isolation Testing
+------------------------------
+# Create two isolated networks
+docker network create network-red
+docker network create network-blue
+
+# Run containers on separate networks
+docker run -d --name red-container --network network-red nginx:alpine
+docker run -d --name blue-container --network network-blue nginx:alpine
+
+# Test isolation - red cannot reach blue
+MSYS_NO_PATHCONV=1 docker exec red-container sh -c \
+  "wget -qO- http://blue-container --timeout=3 || echo 'Cannot reach blue-container'"
+# Output: wget: bad address 'blue-container' - Cannot reach blue-container
+
+# Connect red-container to network-blue
+docker network connect network-blue red-container
+
+# Now red-container is in both networks and can reach blue-container
+MSYS_NO_PATHCONV=1 docker exec red-container sh -c "wget -qO- http://blue-container"
+# Output: nginx welcome page - connection successful
+
+
+docker network ls (final)
+--------------------------
+bridge              bridge    local
+host                host      local
+none                null      local
+langmind2_default   bridge    local
+
+docker volume ls (final)
+-------------------------
+local     langmind2_pgdata
+local     my-first-repo_postgres_data
+(+ anonymous volumes from previous tasks)
+
+
+Volume types summary
+--------------------
+Named volume  - Docker manages storage location. Use for databases and
+                persistent data that must survive container removal.
+Bind mount    - You specify the host path. Use during development to
+                get live code reloading without rebuilding the image.
+tmpfs         - RAM only, never touches disk. Use for temporary files,
+                secrets, or sensitive data that must not be persisted.
+
+
+Real-world network architecture pattern
+----------------------------------------
+network-public:   nginx (reverse proxy) - exposed to internet
+network-private:  nginx + node-api + postgres - internal only
+
+nginx is connected to both networks:
+- receives requests from public
+- forwards to node-api in private
+- postgres is isolated in private, unreachable from outside
+
+This pattern keeps the database inaccessible from the internet
+while nginx acts as the single entry point.
+
+
+Notes (Windows / Git Bash)
+---------------------------
+MSYS_NO_PATHCONV=1 prefix required when passing Unix absolute paths
+to Docker exec commands (e.g. /tmp/cache, /etc/nginx/nginx.conf).
+For volume bind mounts use Windows-style paths: C:/Users/... 
+not Git Bash style: /c/Users/...

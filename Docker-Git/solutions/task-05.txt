@@ -1,0 +1,88 @@
+Task 05 — Optimizing Docker Images with Multi-stage Builds
+
+Practice repository
+-------------------
+...\my-first-repo
+
+Single-stage Dockerfile
+-----------------------
+FROM node:24
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+
+Multi-stage Dockerfile
+----------------------
+FROM node:24 AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+
+FROM node:24-alpine AS production
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+
+.dockerignore
+-------------
+node_modules
+.git
+dist
+.env
+*.log
+
+src and TypeScript files are intentionally not ignored: the builder needs them to compile the application. Only the compiled dist directory and production dependencies are copied into the final stage.
+
+Image size comparison
+---------------------
+my-node-app:single — 1.2GB
+my-node-app:multi  — 177MB
+The multi-stage image is about 85% smaller.
+
+Build and test commands
+-----------------------
+npm run build — compiles src/index.ts into dist/index.js.
+docker build -f Dockerfile.single -t my-node-app:single . — builds the single-stage image.
+docker build -f Dockerfile.multi -t my-node-app:multi . — builds the multi-stage image.
+docker images my-node-app — compares the image sizes.
+
+docker run -d --name my-node-single -p 3001:3000 my-node-app:single — starts the single-stage container.
+docker logs my-node-single — confirms the server started.
+curl http://localhost:3001 — the immediate first request got an empty reply while the server was starting; a retry after startup returned Hello Docker!.
+docker stop my-node-single
+docker rm my-node-single
+
+docker run -d --name my-node-multi -p 3001:3000 my-node-app:multi — starts the multi-stage container.
+docker logs my-node-multi — confirms the server started.
+curl http://localhost:3001 — confirmed the same Hello Docker! response.
+docker stop my-node-multi
+docker rm my-node-multi
+
+Build times
+-----------
+After adding .dockerignore, warm-cache rebuilds took 2.266s (single-stage) and 1.939s (multi-stage). All Docker build layers were cached, so these timings do not isolate the effect of .dockerignore.

@@ -1,0 +1,45 @@
+Task 02 — Creating Branches and Basic Merge Operations
+
+Practice repository
+-------------------
+...\my-first-repo
+
+Added start, test, and dev scripts to package.json on feature/add-scripts.
+Merged that branch into main with a fast-forward merge, then deleted it.
+feature/add-dependencies was created from main before the merge and remains at the previous commit.
+
+Git commands used
+-----------------
+git status --short — checks for uncommitted changes.
+git branch --show-current — shows the active branch.
+git branch -a — lists local and remote branches.
+git switch -c feature/add-scripts — creates and switches to the scripts feature branch.
+git add package.json — stages the package.json change.
+git commit -m "Add npm scripts" — commits the scripts on the feature branch.
+git switch main — switches to the main branch.
+git diff main..feature/add-scripts -- package.json — compares package.json between main and the feature branch.
+git switch -c feature/add-dependencies main — creates the dependencies branch from main and switches to it.
+git merge feature/add-scripts — merges the scripts branch into main; Git used a fast-forward.
+git branch -d feature/add-scripts — deletes the merged feature branch.
+git log --graph --oneline — displays commit history as a compact graph.
+
+Branch lists at different stages
+--------------------------------
+After creating feature/add-scripts:
+* feature/add-scripts
+  main
+
+After creating feature/add-dependencies from main:
+* feature/add-dependencies
+  feature/add-scripts
+  main
+
+After merging and deleting feature/add-scripts:
+  feature/add-dependencies
+* main
+
+Commit graph
+------------
+* 4ef48e1 (HEAD -> main) Add npm scripts
+* b258f2c (feature/add-dependencies) Add project documentation and metadata
+* bb2cb63 Add Git ignore rules

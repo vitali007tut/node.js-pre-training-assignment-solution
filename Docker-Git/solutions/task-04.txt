@@ -1,0 +1,54 @@
+Task 04 — Simulating and Resolving Merge Conflicts
+
+Practice repository
+-------------------
+...\my-first-repo
+
+Git commands used
+-----------------
+git switch -c feature/update-readme-v1 — creates the first branch from main.
+git branch --show-current — shows the active branch.
+git add README.md — stages the changed README.
+git commit -m "Update README title to v1" — commits the v1 title.
+git switch main — switches to main.
+git switch -c feature/update-readme-v2 — creates the second branch from main.
+git branch --show-current — confirms the active branch.
+git add README.md — stages the changed README.
+git commit -m "Update README title to v2" — commits the v2 title.
+git switch main — switches back to main.
+git merge feature/update-readme-v1 — merges v1 into main.
+git merge feature/update-readme-v2 — attempts to merge v2 and produces a conflict.
+git status --short — shows unresolved/changed files.
+git diff --check — checks the resolution for whitespace errors.
+git add README.md — marks the conflict as resolved and stages the final file.
+git diff --cached -- README.md — reviews the staged resolution.
+git commit -m "Merge feature/update-readme-v2" — completes the merge.
+git log --graph --oneline --all — displays the commit graph for all branches.
+
+Conflict markers
+----------------
+<<<<<<< HEAD
+# My Awesome Project v1
+=======
+# My Super Project v2
+>>>>>>> feature/update-readme-v2
+
+Resolution
+----------
+Replaced the conflicting block and markers with a combined title:
+# My Awesome Super Project (v1 + v2)
+
+Kept the project description unchanged.
+
+Final merge commit message
+--------------------------
+Merge feature/update-readme-v2
+
+Commit graph
+------------
+*   6f768a2 (HEAD -> main) Merge feature/update-readme-v2
+|\
+| * bda709f (feature/update-readme-v2) Update README title to v2
+* | 1b5f33b (feature/update-readme-v1) Update README title to v1
+|/
+* 3e76ea6 feat: add docker solutions 1-3
